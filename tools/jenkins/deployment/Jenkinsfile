@@ -1,0 +1,110 @@
+pipeline {
+   agent any
+   parameters {
+      string(name:"DB_MOUNT", defaultValue:"/var/dbs/release", description:"What is the location of the database you wish to use?")
+
+      string(name:"DB_BACKUP", defaultValue:"/var/db_backups/release", description:"What is the location where the database should backup to?")
+
+      string(name:"DB_XFER_DATA", defaultValue:"/var/db_xfers/release/data_transfer.sql", description:"If you want to load a transfer of data, use this path.")
+
+      string(name:"DB_NAME", defaultValue:"dbRelease", description:"What is the name of the database to perform the migration on?")
+
+      string(name:"CREDENTIALS", defaultValue:"general-db", description:"What set of credentials would you like to use (from Jenkins credentials)?")
+
+      string(name:"DB_ROOT_PW", defaultValue:"db-root-pw", description:"What secret would you like to use (from Jenkins credentials)?")
+
+      string(name:"CONF_LOCATION", defaultValue:"/var/confs/release", description:"What is location of the configuration files for this DB?")
+
+      string(name:"EXTERNAL_IP", defaultValue:"51.81.32.201", description: "What IP address to use for the game server?")
+   }
+   environment {
+      DB_EXISTS = fileExists params.DB_MOUNT
+      DB_XFER   = fileExists params.DB_XFER_DATA
+   }
+   stages {
+      stage('Build and Init the Submodules') {
+         steps {
+            sh '''
+               git submodule init
+               git submodule update
+               docker-compose -f tools/docker/building/docker-compose.yml up
+            '''
+         }
+      }
+      stage('Provision a DB')
+      {
+         when {
+            expression { DB_EXISTS != 'true' }
+         }
+         steps {
+            withEnv(['DB_MOUNT=' + params.DB_MOUNT,
+                     'DB_NAME=' + params.DB_NAME,
+                     'EXTERNAL_IP=' + params.EXTERNAL_IP]) {
+               withCredentials([usernamePassword(credentialsId:params.CREDENTIALS, usernameVariable:'DB_USER', passwordVariable:'DB_USER_PASSWD'),
+                                string(credentialsId:params.DB_ROOT_PW, variable:'MYSQL_ROOT_PASSWORD')]) {
+                  sh '''
+                     mkdir -p ${DB_MOUNT}
+                     docker-compose -f tools/docker/db-provisioning/docker-compose.yml up
+                 '''
+               }
+            }
+         }
+      }
+      stage('Loading Data from a Transfer') {
+         when {
+            expression { DB_XFER == 'true' }
+         }
+         steps {
+            withEnv(['DB_MOUNT=' + params.DB_MOUNT,
+                     'DB_NAME=' + params.DB_NAME,
+                     'DB_XFER_DATA=' + params.DB_XFER_DATA,
+                     'EXTERNAL_IP=' + params.EXTERNAL_IP]) {
+               withCredentials([usernamePassword(credentialsId:params.CREDENTIALS, usernameVariable:'DB_USER', passwordVariable:'DB_USER_PASSWD'),
+                                string(credentialsId:params.DB_ROOT_PW, variable:'MYSQL_ROOT_PASSWORD')]) {
+                  sh '''
+                     docker-compose -f tools/docker/db-transfer/docker-compose.yml up -d
+                     sleep 15
+                     docker exec -i transfer-db mysql $DB_NAME -u root -p$MYSQL_ROOT_PASSWORD < $DB_XFER_DATA
+                     docker exec -i transfer-db mysql $DB_NAME -u root -p$MYSQL_ROOT_PASSWORD -e "UPDATE zone_settings SET zoneip='$EXTERNAL_IP';"
+                     docker-compose -f tools/docker/db-transfer/docker-compose.yml down
+                     rm $DB_XFER_DATA
+                  '''
+               }
+            }
+         }
+      }
+      stage('Reload the Database (safe)')
+      {
+         when {
+            expression { DB_EXISTS == 'true'}
+         }
+         steps {
+            withEnv(['DB_MOUNT=' + params.DB_MOUNT,
+                     'DB_NAME=' + params.DB_NAME,
+                     'EXTERNAL_IP=' + params.EXTERNAL_IP]) {
+               withCredentials([usernamePassword(credentialsId:params.CREDENTIALS, usernameVariable:'DB_USER', passwordVariable:'DB_USER_PASSWD'),
+                                string(credentialsId:params.DB_ROOT_PW, variable:'MYSQL_ROOT_PASSWORD')]) {
+                  sh '''
+                     docker-compose -f tools/docker/db-safe-reload/docker-compose.yml up -d
+                     sleep 15
+                     docker exec -i safe-db-reload bash -c "/docker-entrypoint-initdb.d/safe-db-reload.sh"
+                     docker-compose -f tools/docker/db-safe-reload/docker-compose.yml down
+                  '''
+               }
+            }
+         }
+      }
+      stage('Deploying Server') {
+         steps {
+            withEnv(['DB_MOUNT=' + params.DB_NAME,
+                     'DB_BACKUP=' + params.DB_BACKUP,
+                     'DB_NAME=' + params.DB_NAME,
+                     'CONF_LOCATION=' + params.CONF_LOCATION]) {
+                withCredentials([usernamePassword(credentialsId:params.CREDENTIALS, usernameVariable:'DB_USER', passwordVariable:'DB_USER_PASSWD')]) {
+                    sh 'docker-compose -f tools/docker/deployment/docker-compose.yml up -d'
+                }
+            }
+         }
+      }
+   }
+}
