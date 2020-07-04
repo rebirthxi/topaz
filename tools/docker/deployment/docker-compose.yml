@@ -1,0 +1,106 @@
+version: '3.4'
+services:
+  xidb:
+    image: mysql:5.7
+    networks:
+      xi-network:
+        ipv4_address: 192.168.10.5
+    expose:
+      - "3306"
+    volumes:
+      - ${DB_MOUNT}:/var/lib/mysql
+
+  autobackup-xidb:
+    image: selim13/automysqlbackup
+    volumes:
+      - ${DB_BACKUP}:/backup
+    environment:
+      DBHOST: "xidb"
+      DBPORT: 3306
+      DBNAMES: "all"
+      USERNAME: "${DB_USER}"
+      PASSWORD: "${DB_USER_PASSWD}"
+      CRON_SCHEDULE: "0 0 * * *"
+      CREATE_DATABASE: "no"
+    networks:
+      xi-network:
+        ipv4_address: 192.168.10.4
+
+  xiconnect:
+    image: xiserver:latest
+    volumes:
+      - ${PWD}:/opt/ffxi-server/
+      - ${CONF_LOCATION}:/opt/ffxi-server/conf
+    working_dir: /opt/ffxi-server
+    environment:
+      - DB_HOST=192.168.10.5
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=3306
+      - DB_USER=${DB_USER}
+      - DB_USER_PASSWD=${DB_USER_PASSWD}
+      - MSG_IP=192.168.10.6
+      - MSG_PORT=54003
+    ports:
+      - "54001:54001"
+      - "54230:54230/tcp"
+      - "54231:54231"
+    expose: 
+      - "54003"
+    networks:
+      xi-network:
+        ipv4_address: 192.168.10.6
+    stdin_open: true
+    tty: true
+    command: >
+      bash -c "sleep 15; ./topaz_connect"
+
+  xigame:
+    image: xiserver:latest
+    volumes:
+      - ${PWD}:/opt/ffxi-server/
+      - ${CONF_LOCATION}:/opt/ffxi-server/conf
+    working_dir: /opt/ffxi-server
+    environment:
+      - DB_HOST=192.168.10.5
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=3306
+      - DB_USER=${DB_USER}
+      - DB_USER_PASSWD=${DB_USER_PASSWD}
+      - MSG_IP=192.168.10.6
+      - MSG_PORT=54003
+    ports:
+      - "54230:54230/udp"
+    networks:
+      xi-network:
+        ipv4_address: 192.168.10.2
+    tty: true
+    command: >
+      bash -c "sleep 15; ./topaz_game"
+
+  xisearch:
+    image: xiserver:latest
+    volumes:
+      - ${PWD}:/opt/ffxi-server/
+      - ${CONF_LOCATION}:/opt/ffxi-server/conf
+    working_dir: /opt/ffxi-server
+    environment:
+      - DB_HOST=192.168.10.5
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=3306
+      - DB_USER=${DB_USER}
+      - DB_USER_PASSWD=${DB_USER_PASSWD}
+    ports:
+      - "54002:54002"
+    networks:
+      xi-network:
+        ipv4_address: 192.168.10.3
+    command: >
+      bash -c "sleep 15; ./topaz_search"
+
+
+networks:
+  xi-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: "192.168.10.0/24"

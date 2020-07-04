@@ -1,0 +1,14 @@
+version: '3.4'
+services:
+  xibuild:
+    build:
+      context: ${PWD}
+    image: xiserver:latest
+    container_name: xibuild
+    volumes:
+      - ${PWD}:/opt/ffxi-server/
+    command: >
+      bash -c "cd /opt/ffxi-server &&
+               cmake .             &&
+               make -j8"
+

@@ -1,0 +1,15 @@
+version: '3.3'
+services:
+  transfer-db-data:
+    image: mysql:5.7
+    container_name: transfer-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_USER_PASSWD=${DB_USER_PASSWD}
+      - EXTERNAL_IP=${EXTERNAL_IP}
+    volumes:
+      - ${PWD}/tools/scripts/db-transfer.sh:/bin/db-transfer.sh
+      - ${DB_XFER_DATA}:/var/db_xfer/
+      - ${DB_MOUNT}:/var/lib/mysql

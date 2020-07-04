@@ -186,3 +186,4 @@ cmake_install.cmake
 /conf/server_message_fr.conf
 
 /tools/environment_setup/setup_server_environment_for_*.bash
+/tools/environment_setup/setup_docker_environment_for_*.bash
