@@ -1,0 +1,59 @@
+---
+- hosts: xiserver
+  become: true
+  tasks:
+    - name: Update Apt
+      apt:
+        upgrade: yes
+        update_cache: yes
+
+    - name: Install mariaDB server
+      apt:
+        name: mariadb-server
+        state: present
+
+    - name: Install maria dev lib
+      apt:
+        name: libmariadbclient-dev
+        state: present
+    - name: Install maria DB dev compant
+      apt:
+        name: libmariadb-dev-compat
+        state: present
+
+    - name: Install luajit
+      apt:
+        name: libluajit-5.1-dev
+        state: present
+
+    - name: Install zmq3-dev
+      apt:
+        name: libzmq3-dev
+        state: present
+
+    - name: Install auto configure
+      apt:
+        name: autoconf
+        state: present
+
+    - name: Install package config
+      apt:
+        name: pkg-config
+        state: present
+
+    - name: Install zlib-dev
+      apt:
+        name: zlib1g-dev
+        state: present
+
+    - name: Install libssl-dev
+      apt:
+        name: libssl-dev
+        state: present
+
+    - name: Ensure mysql is running and start on boot
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+      become: yes

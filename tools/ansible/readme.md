@@ -53,7 +53,7 @@ For you, it will be whatever user you added your ssh key to in the above step.
 
  ##[Playbook: provision-user.yaml]
  
- **Provisioning a new user**
+ **Provisioning a new user (requires Python Passlib)**
   
  You may want to setup a development user or a non-root user on your server.
  For example, our developers have ssh users on our server and then use sshfs to mount the server filesystem
@@ -65,3 +65,11 @@ For you, it will be whatever user you added your ssh key to in the above step.
  From the ansible directory(`cd tools/ansible/`), run the command below. 
  
  `ansible-playbook -i hosts provision-user.yaml`
+ 
+##[Playbook: setup-server-for-native.yaml]
+
+This playbook will install all dependencies and setup the code for server deployment.
+If you intend to run from **docker** or **jenkins** do **not** do this part.
+If you don't know if you intend to, then you probably don't and you are good to use this playbook.
+
+`ansible-playbook -i hosts setup-server-for-native.yaml`
