@@ -1,0 +1,16 @@
+---
+- hosts: xiserver
+  become: true
+
+  pre_tasks:
+    - name: Update Apt
+      apt:
+        upgrade: yes
+        update_cache: yes
+
+  vars:
+    docker_users:
+#      - user1
+
+  roles:
+    - geerlingguy.docker

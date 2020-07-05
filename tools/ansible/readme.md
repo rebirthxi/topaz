@@ -73,3 +73,11 @@ If you intend to run from **docker** or **jenkins** do **not** do this part.
 If you don't know if you intend to, then you probably don't and you are good to use this playbook.
 
 `ansible-playbook -i hosts setup-server-for-native.yaml`
+
+
+##[Playbook: setup-server-for-docker.yaml]
+
+This playbook will install docker and add all the users listed in the `docker_users` to the docker
+usergroup (this allows them to actually run containers without sudo).
+
+`ansible-playbook -i hosts setup-server-for-docker.yaml`
