@@ -1,0 +1,34 @@
+pipeline {
+   agent any
+   parameters {
+      string(name:"DB_NAME", defaultValue:"dbRelease", description:"What is the name of the database to perform the migration on?")
+
+      string(name:"CREDENTIALS", defaultValue:"general-db", description:"What set of credentials would you like to use?")
+
+      string(name:"DB_MOUNT", defaultValue:"/var/dbs/release", description:"What is the location of the database you wish to migrate?")
+
+      string(name:"CONF_LOCATION", defaultValue:"/var/confs/release", description:"What is location of the configuration files for this DB?")
+   }
+   stages {
+      stage('Mount DB and Perform Migration') {
+         steps {
+            withEnv(['DB_MOUNT=' + params.DB_MOUNT,
+                     'DB_NAME=' + params.DB_NAME,
+                     'CONF_LOCATION=' + params.CONF_LOCATION]) {
+               withCredentials([usernamePassword(credentialsId:params.CREDENTIALS, usernameVariable:'DB_USER', passwordVariable:'DB_USER_PASSWD')]) {
+                   sh '''
+                      docker-compose -f tools/docker/db-migrations/docker-compose.yml up -d
+                      sleep 15
+                      docker exec -i migration /opt/ffxi-server/migrations/migrate.py
+                   '''
+               }
+            }
+         }
+      }
+   }
+   post {
+      always {
+        sh 'docker-compose -f tools/docker/db-migrations/docker-compose.yml down'
+      }
+   }
+}
