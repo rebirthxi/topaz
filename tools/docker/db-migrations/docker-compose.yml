@@ -1,0 +1,17 @@
+version: '3.3'
+services:
+  migration:
+    build:
+      context: ${PWD}/tools/docker/db-migrations
+    image: migrate-db
+    container_name: migration
+    environment:
+      - DB_NAME=${DB_NAME}
+      - DB_HOST=migration
+      - DB_PORT=3306
+      - DB_USER=${DB_USER}
+      - DB_USER_PASSWD=${DB_USER_PASSWD}
+    volumes:
+      - ${PWD}:/opt/ffxi-server/
+      - ${CONF_LOCATION}:/opt/ffxi-server/conf
+      - ${DB_MOUNT}:/var/lib/mysql

@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+import hashlib
+import os
 import mysql.connector
 from mysql.connector import Error
 import re
@@ -25,16 +29,24 @@ def connect():
     global db
     global cur
 
-    with open(filename) as f:
-        while True:
-            line = f.readline()
+    credentials["mysql_database"] = os.getenv('DB_NAME')
+    credentials["mysql_host"]     = os.getenv('DB_HOST')
+    credentials["mysql_port"]     = os.getenv('DB_PORT')
+    credentials["mysql_login"]    = os.getenv('DB_USER')
+    credentials["mysql_password"] = os.getenv('DB_USER_PASSWD')
 
-            if not line: break
+    if credentials["mysql_database"] is None:
+        with open(filename) as f:
+            while True:
+                line = f.readline()
 
-            match = re.match(r"(mysql_\w+):\s+(\S+)", line)
+                if not line:
+                    break
 
-            if match:
-                credentials[match.group(1)] = match.group(2)
+                match = re.match(r"(mysql_\w+):\s+(\S+)", line)
+
+                if match:
+                    credentials[match.group(1)] = match.group(2)
 
     database = credentials["mysql_database"]
     host = credentials["mysql_host"]
@@ -90,7 +102,11 @@ def run_all_migrations():
     close()
 
     print("Finished running all migrations")
-    success = input("Please close the window")
+
+    # Add protection for automated runs
+    if os.getenv('DB_NAME') is None:
+        success = input("Please close the window")
+
 
 if __name__ == "__main__":
     run_all_migrations()
