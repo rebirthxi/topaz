@@ -1,0 +1,10 @@
+pipeline {
+   agent any
+   stages {
+      stage('Shutting down Server') {
+         steps {
+            sh 'docker-compose -f tools/docker/deployment/docker-compose.yml down'
+         }
+      }
+   }
+}

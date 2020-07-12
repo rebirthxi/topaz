@@ -96,7 +96,7 @@ pipeline {
       }
       stage('Deploying Server') {
          steps {
-            withEnv(['DB_MOUNT=' + params.DB_NAME,
+            withEnv(['DB_MOUNT=' + params.DB_MOUNT,
                      'DB_BACKUP=' + params.DB_BACKUP,
                      'DB_NAME=' + params.DB_NAME,
                      'CONF_LOCATION=' + params.CONF_LOCATION]) {
