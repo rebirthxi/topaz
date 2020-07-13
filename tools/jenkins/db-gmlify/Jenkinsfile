@@ -1,0 +1,27 @@
+pipeline {
+   agent any
+   parameters {
+      string(name:"CHAR_NAME", defaultValue:"GMChar", description:"What is the name of the character you wish to make a GM?")
+
+      string(name:"GM_LEVEL", defaultValue:"1", description:"What level should this GM character be?")
+
+      string(name:"DB_NAME", defaultValue:"dbRelease", description:"What is the name of the DB?")
+
+      string(name:"CREDENTIALS", defaultValue:"general-db", description:"Which set of credentials should be used?")
+   }
+   stages {
+      stage('Making a character a GM') {
+         steps {
+            withEnv(['GM_LEVEL=' + params.GM_LEVEL,
+                     'CHAR_NAME=' + params.CHAR_NAME,
+                     'DB_NAME=' + params.DB_NAME]) {
+               withCredentials([usernamePassword(credentialsId:params.CREDENTIALS, usernameVariable:'DB_USER', passwordVariable:'DB_USER_PASSWD')]) {
+                  sh '''
+                     docker-compose -f tools/docker/deployment/docker-compose.yml exec -T xidb mysql $DB_NAME -u $DB_USER -p$DB_USER_PASSWD -e "UPDATE chars SET gmlevel=$GM_LEVEL WHERE charname='$CHAR_NAME';"
+                  '''
+               }
+            }
+         }
+      }
+   }
+}
