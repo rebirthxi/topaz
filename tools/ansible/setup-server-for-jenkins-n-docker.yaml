@@ -1,0 +1,51 @@
+---
+- hosts: xiserver
+  become: true
+
+  pre_tasks:
+    - name: Update Apt
+      apt:
+        upgrade: yes
+        update_cache: yes
+
+  vars:
+    docker_users:
+      - jenkins
+
+  roles:
+    - geerlingguy.docker
+    - geerlingguy.java
+    - geerlingguy.jenkins
+
+  post_tasks:
+    - name: create the master db folders
+      file:
+        path: /var/dbs/
+        owner: jenkins
+        group: jenkins
+        state: directory
+        mode: '0755'
+
+    - name: create the backup folders for the dbs
+      file:
+        path: /var/db_backups/
+        owner: jenkins
+        group: jenkins
+        state: directory
+        mode: '0755'
+
+    - name: create the backup folders for data transfers
+      file:
+        path: /var/db_xfers/
+        owner: jenkins
+        group: jenkins
+        state: directory
+        mode: '0755'
+
+    - name: create the folder for confs
+      file:
+        path: /var/confs/
+        owner: jenkins
+        group: jenkins
+        state: directory
+        mode: '0755'
