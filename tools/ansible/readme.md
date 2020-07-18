@@ -82,7 +82,7 @@ usergroup (this allows them to actually run containers without sudo).
 
 `ansible-playbook -i hosts setup-server-for-docker.yaml`
 
-##[Playbook: setup-server-for-jenkins-n-docker.yaml]]
+##[Playbook: setup-server-for-jenkins-n-docker.yaml]
 
 This playbook will install docker and jenkins. If you use this playbook, you'll need to setup your
 own SSL certs. Using this also assumes that you will use docker to deploy your
@@ -90,3 +90,12 @@ application. It is possible to run on hardware using Jenkins but none of the pro
 pipelines support that.
 
 `ansible-playbook -i hosts setup-server-for-jenkins-n-docker.yaml`
+
+##[Playbook: setup-server-for-jenkins-n-docker-n-ssl.yaml]
+
+This playbook will do everything that the above one (setup-server-for-jenkins-n-docker.yaml) does but
+also setup your SSL certs. You will need to update your domain and the email address you want
+to associate with the SSL in the hosts file. It also sets up nginx but you will have to setup the conf
+information for that yourself.
+
+`ansible-playbook -i hosts setup-server-for-jenkins-n-docker-n-ssl.yaml`

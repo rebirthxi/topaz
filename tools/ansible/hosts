@@ -44,3 +44,8 @@
 
 [xiserver]
 {{ your server }} ansible_user={{ user }}
+
+# Uncomment to run with playbook with ssl
+# [xiserver:vars]
+# certbot_email = {{ email@example.com }}
+# certbot_domain = {{ website.domain.com }}
