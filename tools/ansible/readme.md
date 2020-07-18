@@ -81,3 +81,12 @@ This playbook will install docker and add all the users listed in the `docker_us
 usergroup (this allows them to actually run containers without sudo).
 
 `ansible-playbook -i hosts setup-server-for-docker.yaml`
+
+##[Playbook: setup-server-for-jenkins-n-docker.yaml]]
+
+This playbook will install docker and jenkins. If you use this playbook, you'll need to setup your
+own SSL certs. Using this also assumes that you will use docker to deploy your
+application. It is possible to run on hardware using Jenkins but none of the provided
+pipelines support that.
+
+`ansible-playbook -i hosts setup-server-for-jenkins-n-docker.yaml`
